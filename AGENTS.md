@@ -37,6 +37,7 @@ src/control.rs         the socket that kb ctl and the MCP server talk to; instan
 src/commands.rs        the agent commands: one table drives kb ctl, its help and MCP
 src/devtools.rs        carries the agent commands out, and the page-side scripts
 src/cli.rs             kb ctl and kb list
+src/doctor.rs          kb doctor, and the check that refuses terminals kb cannot draw in
 src/mcp.rs             kb mcp
 src/skill.rs           kb skill; the skill's text is skill/SKILL.md
 src/bench.rs           kb bench

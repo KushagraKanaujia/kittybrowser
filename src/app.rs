@@ -258,6 +258,14 @@ struct App {
 }
 
 pub fn run(options: Options) -> Result<(), String> {
+    // Both are checked before the terminal is touched, so the reason is
+    // printed plainly instead of behind a blank pane.
+    crate::doctor::refuse_unsupported_terminal()?;
+    if crate::engine::chrome::find_binary().is_none() {
+        return Err("can't find Chrome; install Chrome, Chromium, Edge or Brave, or set KB_CHROME.\n\
+                    kb doctor checks your setup."
+            .to_owned());
+    }
     // Before anything is written to the terminal: a failure after that
     // leaves the terminal's replies to our queries for the shell to read.
     let claim = control::claim()?;

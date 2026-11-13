@@ -6,6 +6,13 @@ Notable changes to kb. The format follows
 
 ## Unreleased
 
+- `kb doctor` checks the terminal (asking it directly whether it draws kitty
+  graphics), tmux and screen, Chrome, the data folder, the agent skill and
+  the MCP server, and says what to fix.
+- kb stops with a plain reason in Terminal.app, iTerm2, tmux and screen, or
+  when there's no Chrome, instead of a blank pane (`KB_FORCE=1` overrides).
+- Prebuilt kb for macOS and Linux (Intel and ARM) on each release, and
+  `install.sh`, so installing doesn't need Rust.
 - Copy: Cmd+C or Ctrl+C copies the selection, or the address while editing
   it, to the system clipboard through the terminal; what pages copy
   themselves (copy buttons) goes there too.

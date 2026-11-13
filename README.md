@@ -39,14 +39,18 @@ you, a star helps other people find it.
 
 ## Quick start
 
-With [Rust](https://rustup.rs) and Chrome installed:
+With Chrome installed, and no Rust needed:
 
 ```sh
-cargo install --git https://github.com/graiz/kittybrowser
+curl -fsSL https://raw.githubusercontent.com/graiz/kittybrowser/main/install.sh | sh
+kb doctor                  # checks your terminal and Chrome, and says what to fix
 kb news.ycombinator.com
 ```
 
-Ctrl+/ shows the keys, Ctrl+Q quits.
+Ctrl+/ shows the keys, Ctrl+Q quits. The script downloads a prebuilt kb for
+your Mac or Linux machine into `~/.local/bin` (set `KB_INSTALL_DIR` to put it
+elsewhere), or builds it with cargo when there's no prebuilt one yet. With
+Rust you can also `cargo install --git https://github.com/graiz/kittybrowser`.
 
 ## Requirements
 
@@ -55,7 +59,13 @@ Ctrl+/ shows the keys, Ctrl+Q quits.
   inside tmux or screen.
 - **Chrome, Chromium, Edge or Brave**, installed where kb can find it, or
   named with `KB_CHROME`.
-- **Rust** (stable, from [rustup](https://rustup.rs)) to build it.
+- **Rust** (stable, from [rustup](https://rustup.rs)) only to build it
+  yourself.
+
+`kb doctor` checks all of these and asks the terminal directly whether it
+can draw kitty graphics. kb also refuses to start in a terminal it knows
+can't (Terminal.app, iTerm2, tmux, screen) and says why, rather than showing
+a blank pane; `KB_FORCE=1` starts it anyway.
 
 ## Install
 
@@ -100,7 +110,7 @@ Windows). This is untested.
 
 ### Updating
 
-Run the same `cargo install` again (add `--force` if it says kb is already
+Run the install script again, or the same `cargo install` (add `--force` if it says kb is already
 installed). If you use the agent skill, run `kb skill install` afterwards so
 it matches the new version.
 
@@ -109,7 +119,8 @@ it matches the new version.
 ```sh
 kb skill remove                 # if you installed the agent skill
 kb mcp off                      # if you turned on the MCP server
-cargo uninstall kittybrowser
+rm ~/.local/bin/kb              # if you used the install script
+cargo uninstall kittybrowser    # if you used cargo
 rm -rf ~/.kittybrowser          # history, profiles and cookies
 ```
 
@@ -231,9 +242,13 @@ it's worth knowing before you turn on the MCP server. See
 | `KB_CHROME` | The browser to run, if kb doesn't find one |
 | `KB_CHROME_ARGS` | Extra flags for Chrome, separated by spaces |
 | `KB_TRANSFER=pty` | Always send frames through the terminal, never by file |
+| `KB_FORCE` | Start even in a terminal kb thinks can't draw it |
 | `KB_LOG` | A file to append diagnostics to (sizes, frames, clicks) |
 
 ## Troubleshooting
+
+Start with `kb doctor`: it checks the terminal, tmux, Chrome and kb's data
+folder, and prints what to fix.
 
 - **"can't find Chrome":** install Chrome or Chromium, or set `KB_CHROME`.
 - **Nothing is drawn, or escape codes appear:** the terminal doesn't support
