@@ -7,6 +7,7 @@
 //! cause before the user has to guess.
 
 use std::io::Write;
+use std::path::{Path, PathBuf};
 use std::time::Duration;
 
 /// What the environment says about the terminal kb is running in.
@@ -159,6 +160,17 @@ fn answered_graphics(bytes: &[u8]) -> bool {
     bytes.windows(7).any(|window| window == b"\x1b_Gi=31")
 }
 
+/// Where the browser kb would start is. KB_CHROME may be a bare name, which
+/// Chrome is started through PATH like any command, so look it up there.
+fn resolve(path: &Path) -> Result<PathBuf, String> {
+    if path.components().count() > 1 {
+        return if path.is_file() { Ok(path.to_owned()) } else { Err(path.display().to_string()) };
+    }
+    std::env::var_os("PATH")
+        .and_then(|dirs| std::env::split_paths(&dirs).map(|dir| dir.join(path)).find(|path| path.is_file()))
+        .ok_or_else(|| path.display().to_string())
+}
+
 struct Report {
     problems: usize,
 }
@@ -182,13 +194,16 @@ pub fn run() -> i32 {
     let mut report = Report { problems: 0 };
     println!("kb {} on {}\n", env!("CARGO_PKG_VERSION"), std::env::consts::OS);
 
-    let env = Env::read();
-    match terminal(&env) {
+    let verdict = terminal(&Env::read());
+    let known_bad = matches!(verdict, Terminal::Unsupported(_));
+    match verdict {
         Terminal::Supported(name) => report.ok("terminal", name),
         Terminal::Unsupported(why) => report.fail("terminal", &why),
         Terminal::Unknown(name) => report.note("terminal", &format!("{name} isn't one kb knows; checking it directly")),
     }
-    if !env.tmux && !env.screen {
+    // Asking a terminal already known not to work would only report the
+    // same problem twice.
+    if !known_bad {
         match probe_graphics() {
             Some(true) => report.ok("graphics", "the terminal answers kitty graphics queries"),
             Some(false) => report.fail("graphics", &format!("the terminal doesn't draw kitty graphics; {USE_INSTEAD}")),
@@ -204,9 +219,9 @@ pub fn run() -> i32 {
         report.ok("pane", &format!("{}x{} cells{pixels}", window.cols, window.rows));
     }
 
-    match crate::engine::chrome::find_binary() {
-        Some(path) if path.is_file() => report.ok("browser", &path.display().to_string()),
-        Some(path) => report.fail("browser", &format!("KB_CHROME is {}, which isn't a file", path.display())),
+    match crate::engine::chrome::find_binary().map(|path| resolve(&path)) {
+        Some(Ok(path)) => report.ok("browser", &path.display().to_string()),
+        Some(Err(path)) => report.fail("browser", &format!("KB_CHROME is {path}, which isn't a program kb can find")),
         None => report.fail(
             "browser",
             "no Chrome, Chromium, Edge or Brave found; install one, or set KB_CHROME=/path/to/browser",
@@ -273,6 +288,14 @@ mod tests {
         let tmux = Env { tmux: true, kitty: true, ..Env::default() };
         assert!(matches!(terminal(&tmux), Terminal::Unsupported(why) if why.contains("tmux")));
         assert!(matches!(terminal(&with(Some("ghostty"), Some("screen-256color"))), Terminal::Unsupported(_)));
+    }
+
+    #[test]
+    fn browser_paths() {
+        assert!(resolve(Path::new("sh")).is_ok_and(|path| path.is_absolute()));
+        assert!(resolve(Path::new("/bin/sh")).is_ok());
+        assert!(resolve(Path::new("/no/such/browser")).is_err());
+        assert!(resolve(Path::new("no-such-browser-kb")).is_err());
     }
 
     #[test]

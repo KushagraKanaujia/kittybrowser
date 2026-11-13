@@ -42,14 +42,19 @@ if curl -fsSL "$url" -o "$tmp/kb.tar.gz" 2>/dev/null; then
   say "installed $dir/kb"
 elif command -v cargo >/dev/null; then
   say "no release for $target yet; building from source with cargo"
-  cargo install --git "https://github.com/$repo"
+  cargo install --locked --force --git "https://github.com/$repo"
   dir="$HOME/.cargo/bin"
 else
   fail "no release for $target yet, and cargo isn't installed; get Rust from https://rustup.rs and run this again"
 fi
 
 case ":$PATH:" in
-  *":$dir:"*) ;;
-  *) say "add $dir to your PATH, e.g.: echo 'export PATH=\"$dir:\$PATH\"' >> ~/.profile" ;;
+  *":$dir:"*)
+    found="$(command -v kb || true)"
+    if [ -n "$found" ] && [ "$found" != "$dir/kb" ]; then
+      say "another kb at $found comes first on your PATH; remove it, or run $dir/kb"
+    fi
+    ;;
+  *) say "$dir isn't on your PATH; add this line to ~/.zshrc or ~/.bashrc: export PATH=\"$dir:\$PATH\"" ;;
 esac
 say "now run: kb doctor"

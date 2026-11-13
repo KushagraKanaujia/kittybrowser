@@ -72,8 +72,8 @@ a blank pane; `KB_FORCE=1` starts it anyway.
 ### macOS
 
 ```sh
-brew install --cask google-chrome                     # if you don't have Chrome
-cargo install --git https://github.com/graiz/kittybrowser   # puts kb in ~/.cargo/bin
+brew install --cask google-chrome      # if you don't have Chrome
+curl -fsSL https://raw.githubusercontent.com/graiz/kittybrowser/main/install.sh | sh
 kb https://example.com
 ```
 
@@ -84,7 +84,7 @@ On a non-retina display, start it with `kb --scale 1`.
 Install Chrome or Chromium from your distribution or google.com/chrome, then:
 
 ```sh
-cargo install --git https://github.com/graiz/kittybrowser
+curl -fsSL https://raw.githubusercontent.com/graiz/kittybrowser/main/install.sh | sh
 kb --scale 2 https://example.com    # --scale 2 on a HiDPI screen; the default is 1
 ```
 
