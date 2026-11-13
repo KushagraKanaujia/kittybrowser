@@ -29,9 +29,13 @@ fn enabled() -> bool {
     switch().is_ok_and(|path| path.exists())
 }
 
-/// "on" or "off", with how to change it.
-pub fn status() -> String {
-    if enabled() { "on (kb mcp off turns it off)" } else { "off (kb mcp on turns it on)" }.to_owned()
+/// "on" or "off".
+pub fn status() -> &'static str {
+    if enabled() {
+        "on"
+    } else {
+        "off"
+    }
 }
 
 /// Run `kb mcp` with the words after it. Returns the exit status.

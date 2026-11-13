@@ -171,6 +171,16 @@ fn resolve(path: &Path) -> Result<PathBuf, String> {
         .ok_or_else(|| path.display().to_string())
 }
 
+/// The browser kb would start, or why there is none and what to do.
+pub fn browser() -> Result<PathBuf, String> {
+    match crate::engine::chrome::find_binary() {
+        Some(path) => resolve(&path).map_err(|path| format!("KB_CHROME is {path}, which isn't a program kb can find")),
+        None => {
+            Err("no Chrome, Chromium, Edge or Brave found; install one, or set KB_CHROME=/path/to/browser".to_owned())
+        }
+    }
+}
+
 struct Report {
     problems: usize,
 }
@@ -219,13 +229,9 @@ pub fn run() -> i32 {
         report.ok("pane", &format!("{}x{} cells{pixels}", window.cols, window.rows));
     }
 
-    match crate::engine::chrome::find_binary().map(|path| resolve(&path)) {
-        Some(Ok(path)) => report.ok("browser", &path.display().to_string()),
-        Some(Err(path)) => report.fail("browser", &format!("KB_CHROME is {path}, which isn't a program kb can find")),
-        None => report.fail(
-            "browser",
-            "no Chrome, Chromium, Edge or Brave found; install one, or set KB_CHROME=/path/to/browser",
-        ),
+    match browser() {
+        Ok(path) => report.ok("browser", &path.display().to_string()),
+        Err(why) => report.fail("browser", &why),
     }
 
     match crate::data_dir() {
@@ -247,8 +253,14 @@ pub fn run() -> i32 {
         0 => report.note("running", "no kb is open now"),
         n => report.ok("running", &format!("{n} kb{} open (kb list)", if n == 1 { "" } else { "s" })),
     }
-    report.note("agent skill", &crate::skill::status());
-    report.note("mcp", &crate::mcp::status());
+    report.note("agent skill", &crate::skill::status().unwrap_or_else(|error| error));
+    report.note(
+        "mcp",
+        match crate::mcp::status() {
+            "on" => "on (kb mcp off turns it off)",
+            _ => "off (kb mcp on turns it on)",
+        },
+    );
 
     println!();
     if report.problems == 0 {
